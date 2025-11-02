@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import cv2  # استخدمي opencv-python-headless في requirements.txt
+import av  # PyAV لقراءة الفيديو بشكل مستقر
 
 # إعداد واجهة Streamlit
 st.set_page_config(page_title="Taif AI Dashboard", layout="wide")
@@ -21,71 +21,74 @@ if uploaded_file is not None:
     with open("temp_video.mp4", "wb") as f:
         f.write(tfile_bytes)
 
-    # قراءة الفيديو إطارًا فريمًا فريمًا
-    cap = cv2.VideoCapture("temp_video.mp4")
+    # قراءة الفيديو PyAV
+    container = av.open("temp_video.mp4")
     frames = []
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        frames.append(frame)
-    cap.release()
+    step = 5  # خذ كل 5 إطارات لتقليل استهلاك الذاكرة
+    for i, frame in enumerate(container.decode(video=0)):
+        if i % step == 0:
+            img = frame.to_ndarray(format='bgr24')
+            frames.append(img)
+    container.close()
 
-    # توليد قيم عشوائية لكل إطار
-    stress_levels = np.random.randint(30, 80, size=len(frames))
-    engagement_levels = np.random.randint(40, 90, size=len(frames))
-    activity_levels = np.random.randint(20, 100, size=len(frames))
+    if len(frames) == 0:
+        st.error("❌ لم يتم قراءة أي إطار من الفيديو. جربي فيديو آخر.")
+    else:
+        # توليد قيم عشوائية لكل إطار
+        stress_levels = np.random.randint(30, 80, size=len(frames))
+        engagement_levels = np.random.randint(40, 90, size=len(frames))
+        activity_levels = np.random.randint(20, 100, size=len(frames))
 
-    # إنشاء DataFrame
-    df = pd.DataFrame({
-        "Frame": range(len(frames)),
-        "Stress": stress_levels,
-        "Engagement": engagement_levels,
-        "Activity": activity_levels
-    })
+        # إنشاء DataFrame
+        df = pd.DataFrame({
+            "Frame": range(len(frames)),
+            "Stress": stress_levels,
+            "Engagement": engagement_levels,
+            "Activity": activity_levels
+        })
 
-    st.success(f"تم تحليل الفيديو! عدد الإطارات: {len(frames)}")
+        st.success(f"تم تحليل الفيديو! عدد الإطارات: {len(frames)}")
 
-    # عرض البيانات
-    st.subheader("نظرة عامة على البيانات")
-    st.dataframe(df.head())
+        # عرض البيانات
+        st.subheader("نظرة عامة على البيانات")
+        st.dataframe(df.head())
 
-    # حساب المتوسطات
-    avg_stress = df["Stress"].mean()
-    avg_engagement = df["Engagement"].mean()
-    avg_activity = df["Activity"].mean()
+        # حساب المتوسطات
+        avg_stress = df["Stress"].mean()
+        avg_engagement = df["Engagement"].mean()
+        avg_activity = df["Activity"].mean()
 
-    # عرض الرسوم البيانية
-    st.subheader("التحليل البصري")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("متوسط التوتر", f"{avg_stress:.1f}%")
-    col2.metric("متوسط التفاعل", f"{avg_engagement:.1f}%")
-    col3.metric("متوسط النشاط", f"{avg_activity:.1f}%")
-    st.line_chart(df[["Stress", "Engagement", "Activity"]])
+        # عرض الرسوم البيانية
+        st.subheader("التحليل البصري")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("متوسط التوتر", f"{avg_stress:.1f}%")
+        col2.metric("متوسط التفاعل", f"{avg_engagement:.1f}%")
+        col3.metric("متوسط النشاط", f"{avg_activity:.1f}%")
+        st.line_chart(df[["Stress", "Engagement", "Activity"]])
 
-    # التقرير التحليلي
-    st.subheader("التقرير التحليلي")
-    report = f"""
+        # التقرير التحليلي
+        st.subheader("التقرير التحليلي")
+        report = f"""
 تقرير الأداء العام:
 - متوسط التوتر: {avg_stress:.1f}%
 - مستوى التفاعل: {avg_engagement:.1f}%
 - النشاط العام: {avg_activity:.1f}%
 """
-    st.markdown(report)
+        st.markdown(report)
 
-    # توصيات
-    st.subheader("التوصيات")
-    if avg_stress > 70:
-        st.warning("يُنصح بتقليل الضغط عبر أنشطة مريحة داخل الفصل.")
-    if avg_engagement < 50:
-        st.info("أضف تفاعل بصري أو أنشطة جماعية لرفع الانتباه.")
-    if avg_activity < 40:
-        st.info("قلة الحركة قد تعني الملل، شجّع المشاركة الجسدية.")
-    if avg_engagement > 80 and avg_stress < 50:
-        st.success("أداء ممتاز! التفاعل عالٍ والراحة النفسية جيدة.")
+        # التوصيات
+        st.subheader("التوصيات")
+        if avg_stress > 70:
+            st.warning("يُنصح بتقليل الضغط عبر أنشطة مريحة داخل الفصل.")
+        if avg_engagement < 50:
+            st.info("أضف تفاعل بصري أو أنشطة جماعية لرفع الانتباه.")
+        if avg_activity < 40:
+            st.info("قلة الحركة قد تعني الملل، شجّع المشاركة الجسدية.")
+        if avg_engagement > 80 and avg_stress < 50:
+            st.success("أداء ممتاز! التفاعل عالٍ والراحة النفسية جيدة.")
 
-    # زر تحميل CSV
-    st.download_button("تحميل CSV الناتج", df.to_csv(index=False), file_name="taif_metrics.csv")
+        # زر تحميل CSV
+        st.download_button("تحميل CSV الناتج", df.to_csv(index=False), file_name="taif_metrics.csv")
 
 else:
-    st.info("من فضلك ارفع فيديو بصيغة MP4أولًا لرؤية النتائج.")
+    st.info("من فضلك ارفع فيديو بصيغة MP4 أولًا لرؤية النتائج.")
