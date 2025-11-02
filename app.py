@@ -3,9 +3,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-# 🌟 إعداد الواجهة
+# 🌟 إعداد واجهة Streamlit
 st.set_page_config(page_title="Taif AI Dashboard", page_icon="📊", layout="wide")
-st.title("🌈 Taif Classroom Behavioral Analysis")
+st.title("Taif Classroom Behavioral Analysis")
+st.markdown("""
+مرحبًا بك في لوحة تحكم تحليل السلوك الصفي 🌟  
+هنا يمكنك رفع فيديو MP4 للتحليل ومشاهدة الرسومات والتقرير التلقائي.
+""")
+
+
 
 st.markdown("""
 مرحبًا بك في لوحة تحكم تحليل السلوك الصفي 🌟  
