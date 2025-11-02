@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # 🌟 إعداد الواجهة
-st.set_page_config(page_title=Taif AI Dashboard, page_icon=📊, layout=wide)
+st.set_page_config(page_title="Taif AI Dashboard", page_icon="📊", layout="wide")
 
 st.title(🌈 Taif Classroom Behavioral Analysis)
 st.markdown(
